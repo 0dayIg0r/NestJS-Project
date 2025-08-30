@@ -1,12 +1,9 @@
+import { ConflictException, Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/infra/dabatase/prisma.service';
+import { CreateUserDTOProps } from '../dto/user.dto';
 
-export interface CreateUserDTOProps {
-  id: string;
-  name: string;
-  email: string;
-  password: string;
-}
 
+@Injectable()
 export class CreateUserUseCase {
   constructor(private prisma: PrismaService) {}
 
@@ -18,7 +15,7 @@ export class CreateUserUseCase {
     });
 
     if (userExists) {
-      throw new Error('User already exists');
+    throw new ConflictException('User already exists');
     }
 
     const user = await this.prisma.user.create({
@@ -28,11 +25,16 @@ export class CreateUserUseCase {
         name: data.name,
         password: data.password,
       },
+      select:{
+        id: true,
+        email: true,
+        name: true,
+      }
     });
 
     return user;
   }
-}
+} 
 
   
 
