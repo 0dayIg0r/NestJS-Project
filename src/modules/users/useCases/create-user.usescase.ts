@@ -1,6 +1,8 @@
 import { ConflictException, Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/infra/dabatase/prisma.service';
 import { CreateUserDTOProps } from '../dto/user.dto';
+import { hash } from 'bcryptjs';
+
 
 
 @Injectable()
@@ -18,12 +20,13 @@ export class CreateUserUseCase {
     throw new ConflictException('User already exists');
     }
 
+    const passwordHash = await hash(data.password, 8);
     const user = await this.prisma.user.create({
       data: {
         id: data.id,
         email: data.email,
         name: data.name,
-        password: data.password,
+        password: passwordHash,
       },
       select:{
         id: true,
