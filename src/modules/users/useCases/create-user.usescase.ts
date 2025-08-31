@@ -2,42 +2,30 @@ import { ConflictException, Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/infra/dabatase/prisma.service';
 import { CreateUserDTOProps } from '../dto/user.dto';
 import { hash } from 'bcryptjs';
-
-
+import { IUserRepository } from '../repositories/use.repository';
 
 @Injectable()
 export class CreateUserUseCase {
-  constructor(private prisma: PrismaService) {}
+  constructor(private userRepository: IUserRepository) {}
 
   async execute(data: CreateUserDTOProps) {
-    const userExists = await this.prisma.user.findFirst({
-      where: {
-        OR: [{ email: data.email }, { name: data.name }],
-      },
+    const userExists = await this.userRepository.findByUserNameOrEmail({
+      name: data.name,
+      email: data.email,
+    
     });
 
     if (userExists) {
-    throw new ConflictException('User already exists');
+      throw new ConflictException('User already exists');
     }
 
     const passwordHash = await hash(data.password, 8);
-    const user = await this.prisma.user.create({
-      data: {
-        id: data.id,
-        email: data.email,
-        name: data.name,
-        password: passwordHash,
-      },
-      select:{
-        id: true,
-        email: true,
-        name: true,
-      }
+    const user = await this.userRepository.save({
+      ...data,
+      password: passwordHash
+      
     });
 
     return user;
   }
-} 
-
-  
-
+}
